@@ -81,7 +81,9 @@ TEST (Autodiff, VectorTest)
     x(0).derivatives() << 1,0;
     x(1).derivatives() << 0,1;
 
-    y = x.squaredNorm() * Vector2d{1, 1};
+    yAD vec;
+    vec.setOnes();
+    y = x.squaredNorm() * vec;
 
     Matrix2d dydx_desired;
     dydx_desired << 16, 4, 16, 4;

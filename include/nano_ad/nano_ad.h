@@ -79,7 +79,7 @@ public:
             res(i) = r_ad(i).value();
 
         counter = 0;
-        const int* arrptr = NIarr;
+        const int arrptr[sizeof...(NIs)] = {(NIs)...};
         int dummy[sizeof...(j)] = { extractJac(counter, arrptr, r_ad, j)... };
         (void)dummy;
         return success;
@@ -103,19 +103,29 @@ private:
                  const Ref<Matrix<Scalar, NIs, 1>>&... x,
                  const std::index_sequence<Is...>&) const
     {
-        return Functor::f(r, startAD(accumulator(NIarr, Is), x)...);
+        const int arrptr[sizeof...(NIs)] = {(NIs)...};
+        return Functor::f(r, startAD(accumulator(arrptr, Is), x)...);
     }
 
 
     template <int Cols>
-    int extractJac(int& counter, const int*& cols,
+    int extractJac(int& counter, const int* cols,
                    const yAD& r,
                    const Ref<Matrix<Scalar, NO, Cols>>& _j) const
     {
         Ref<Matrix<Scalar, NO, Cols>>& j = const_cast<Ref<Matrix<Scalar, NO, Cols>>&>(_j);
+        //for (int i = 0; i < NO; i++)
+        std::cout << "NO: " << NO << " Cols: " << Cols << std::endl;
+        std::cout << "j rows: " << j.rows() << " col: " << j.cols() << std::endl;
+        std::cout << "r rows: " << r(0).derivatives().rows() << " col: " << r(0).derivatives().cols() << std::endl;
+        std::cout << "*cols: " << *(cols) << " counter: " << counter << std::endl;
         for (int i = 0; i < NO; i++)
         {
-            j.row(i) = r(i).derivatives().block(counter, 0, *(cols), 1).transpose();
+          std::cout << "i: " << i << std::endl;
+          //std::cout << "r blah: " << r(i).derivatives().block(counter, 0, *(cols), 1).transpose() << std::endl;
+          std::cout << "r blah: " << r(i).derivatives().block(counter, 0, Cols, 1).transpose() << std::endl;
+            //j.row(i) = r(i).derivatives().block(counter, 0, *(cols), 1).transpose();
+            j.row(i) = r(i).derivatives().block(counter, 0, Cols, 1).transpose();
         }
         counter+=*(cols);
         cols++;
