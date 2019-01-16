@@ -114,17 +114,8 @@ private:
                    const Ref<Matrix<Scalar, NO, Cols>>& _j) const
     {
         Ref<Matrix<Scalar, NO, Cols>>& j = const_cast<Ref<Matrix<Scalar, NO, Cols>>&>(_j);
-        //for (int i = 0; i < NO; i++)
-        std::cout << "NO: " << NO << " Cols: " << Cols << std::endl;
-        std::cout << "j rows: " << j.rows() << " col: " << j.cols() << std::endl;
-        std::cout << "r rows: " << r(0).derivatives().rows() << " col: " << r(0).derivatives().cols() << std::endl;
-        std::cout << "*cols: " << *(cols) << " counter: " << counter << std::endl;
         for (int i = 0; i < NO; i++)
         {
-          std::cout << "i: " << i << std::endl;
-          //std::cout << "r blah: " << r(i).derivatives().block(counter, 0, *(cols), 1).transpose() << std::endl;
-          std::cout << "r blah: " << r(i).derivatives().block(counter, 0, Cols, 1).transpose() << std::endl;
-            //j.row(i) = r(i).derivatives().block(counter, 0, *(cols), 1).transpose();
             j.row(i) = r(i).derivatives().block(counter, 0, Cols, 1).transpose();
         }
         counter+=*(cols);
