@@ -85,7 +85,7 @@ TEST(Autodiff, FixedWingAttitudeEstimationExample)
   Matrix2d true_dfdx = fixedWingAnalyticalJacobianDfDx(x, u);
   Matrix<double, 2, 4> true_dfdu = fixedWingAnalyticalJacobianDfDu(x, u);
 
-  ASSERT_MAT_NEAR(dfdx, true_dfdx, 1e-5);
-  ASSERT_MAT_NEAR(dfdu, true_dfdu, 1e-5);
+  ASSERT_MAT_NEAR(dfdx, true_dfdx, 1e-14);
+  ASSERT_MAT_NEAR(dfdu, true_dfdu, 1e-14);
 }
 

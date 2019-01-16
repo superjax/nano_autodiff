@@ -17,7 +17,8 @@ include_directories(include
 
 add_executable(nano_ad_test
     src/test_autodiff.cpp
-    src/test_autodiff_dynamics.cpp)
+    src/test_autodiff_dynamics.cpp
+    src/test_autodiff_local_parameterization.cpp)
 target_link_libraries(nano_ad_test
     gtest
     gtest_main
