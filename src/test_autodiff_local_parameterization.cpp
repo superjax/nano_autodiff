@@ -1,6 +1,7 @@
 #include <Eigen/Dense>
 #include <gtest/gtest.h>
 #include <iostream>
+#include <chrono>
 
 #include "geometry/quat.h"
 
@@ -207,3 +208,71 @@ TEST(Autodiff, UAVLocalParameterization)
   ASSERT_MAT_NEAR(dfdu, true_dfdu, 1e-14);
 }
 
+TEST(Autodiff, DISABLED_TimeTest)
+{
+  int num_iterations = 1000;
+
+  CostFunctorAutoDiff<double, UAVDynamics, 16, 17, 6> dynamics;
+
+  Matrix<double, 17, 1> x = randomUAVState();
+  Matrix<double, 6, 1> u;
+  u.setRandom();
+  Matrix<double, 16, 1> xdot;
+  Matrix<double, 16, 17> dfdx_global;
+  Matrix<double, 16, 6> dfdu;
+
+  Matrix<double, 17, 1> y;
+  Matrix<double, 16, 1> delta;
+  delta.setZero();
+  Matrix<double, 17, 17> bp_dfdx;
+  Matrix<double, 17, 16> bp_dfdd;
+  CostFunctorAutoDiff<double, BoxPlusFunctor, 17, 17, 16> box_plus;
+  Matrix<double, 16, 16> dfdx_local;
+
+  std::chrono::high_resolution_clock::time_point t1 =
+      std::chrono::high_resolution_clock::now();
+  for (int i = 0; i < num_iterations; i++)
+  {
+    dynamics.Evaluate(xdot, x, u, dfdx_global, dfdu);
+
+    // Compute the jacobian for the local parameterization which is the jacobian
+    // of the box plus operation evaluated at delta = 0
+    // http://ceres-solver.org/nnls_modeling.html#localparameterization
+    box_plus.Evaluate(y, x, delta, bp_dfdx, bp_dfdd);
+
+    // To use a local parameterization, or error state parameterization
+    // local_matrix = global_matrix * jacobian
+    // http://ceres-solver.org/nnls_modeling.html#localparameterization
+    dfdx_local = dfdx_global * bp_dfdd;
+  }
+  std::chrono::high_resolution_clock::time_point t2 =
+      std::chrono::high_resolution_clock::now();
+  auto duration_AD =
+      std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+
+  Matrix<double, 16, 16> true_dfdx_local;
+  Matrix<double, 16, 6> true_dfdu;
+
+  std::chrono::high_resolution_clock::time_point t1_analytical =
+      std::chrono::high_resolution_clock::now();
+  for (int i = 0; i < num_iterations; i++)
+  {
+    true_dfdx_local = UAVAnalyticalJacobianDfDx(x, u);
+    true_dfdu = UAVAnalyticalJacobianDfDu(x, u);
+  }
+  std::chrono::high_resolution_clock::time_point t2_analytical =
+      std::chrono::high_resolution_clock::now();
+  auto duration_analytical =
+      std::chrono::duration_cast<std::chrono::microseconds>(t2_analytical -
+                                                            t1_analytical)
+          .count();
+
+  double ad_avg =
+      static_cast<double>(duration_AD) / static_cast<double>(num_iterations);
+  double analytical_avg = static_cast<double>(duration_analytical) /
+                          static_cast<double>(num_iterations);
+
+  std::cout << "AD time: " << ad_avg << " us per iteration" << std::endl;
+  std::cout << "Analytical time: " << analytical_avg << " us per iteration"
+            << std::endl;
+}
