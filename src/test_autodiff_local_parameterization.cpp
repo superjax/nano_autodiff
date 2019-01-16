@@ -17,15 +17,6 @@ Matrix<T, 3, 3> skew(const Matrix<T, 3, 1>& v)
   return skew_mat;
 }
 
-//Matrix3d skew(const Vector3d& v)
-//{
-  //Matrix3d skew_mat;
-  //skew_mat << 0.0, -v(2), v(1),
-              //v(2), 0.0, -v(0),
-              //-v(1), v(0), 0.0;
-  //return skew_mat;
-//}
-
 // Example from "Improving the Robustness of Visual-Inertial Extended Kalman
 // Filtering: Supplemental Material" by Jackson, et. al.
 struct UAVDynamics
@@ -70,9 +61,8 @@ struct UAVDynamics
   }
 };
 
-
 Matrix<double, 16, 16> UAVAnalyticalJacobianDfDx(const Matrix<double, 17, 1> &x,
-                                                const Matrix<double, 6, 1> &u)
+                                                 const Matrix<double, 6, 1> &u)
 {
   Vector3d pos = x.block<3, 1>(0, 0);
   Vector3d vel = x.block<3, 1>(3, 0);
@@ -105,7 +95,7 @@ Matrix<double, 16, 16> UAVAnalyticalJacobianDfDx(const Matrix<double, 17, 1> &x,
   dfdx.block<3, 3>(3, 6) = skew<double>(quat_I_b.R() * grav_vec);
   dfdx.block<3, 3>(3, 9) = -e3 * e3.transpose();
   dfdx.block<3, 3>(3, 12) = -skew<double>(vel);
-  dfdx.block<3, 1>(3, 15) = -M*vel;
+  dfdx.block<3, 1>(3, 15) = -M * vel;
 
   dfdx.block<3, 3>(6, 12) = -Matrix3d::Identity();
 
@@ -169,42 +159,6 @@ struct BoxPlusFunctor
   }
 };
 
-class ErrorStateParameterization
-{
-public:
-  //bool Plus(const double* x, const double* delta, double* x_plus_delta) const;
-  bool Plus() const;
-  bool ComputeJacobian(const Matrix<double, 17, 1> &x,
-                       Matrix<double, 17, 16> &jacobian) const
-  {
-    double quat_w = x(6);
-    double quat_x = x(7);
-    double quat_y = x(8);
-    double quat_z = x(9);
-
-    jacobian.setZero();
-    jacobian.setIdentity();
-    jacobian(6, 6) = -quat_x;
-    jacobian(6, 7) = -quat_y;
-    jacobian(6, 8) = -quat_z;
-
-    jacobian(7, 6) = quat_w;
-    jacobian(7, 7) = quat_z;
-    jacobian(7, 8) = -quat_y;
-
-    jacobian(8, 6) = -quat_z;
-    jacobian(8, 7) = quat_w;
-    jacobian(8, 8) = quat_x;
-
-    jacobian(9, 6) = quat_y;
-    jacobian(9, 7) = -quat_x;
-    jacobian(9, 8) = quat_w;
-    return true;
-  }
-  int GlobalSize() const { return 17; }
-  int LocalSize() const { return 16; }
-};
-
 Matrix<double, 17, 1> randomUAVState()
 {
   Matrix<double, 17, 1> x;
@@ -221,21 +175,17 @@ TEST(Autodiff, UAVLocalParameterization)
   CostFunctorAutoDiff<double, UAVDynamics, 16, 17, 6> dynamics;
 
   Matrix<double, 17, 1> x = randomUAVState();
-  //std::cout << "random x: " << std::endl << x << std::endl;
-  //Vector2d x{ 0.1, -0.2 };
-  //Vector4d u{ 0.5, -0.4, 0.03, 20 };
   Matrix<double, 6, 1> u;
   u.setRandom();
-  //Vector3d xdot;
   Matrix<double, 16, 1> xdot;
-  //Vector2d xdot;
-  //Matrix2d dfdx;
-  //Matrix<double, 2, 4> dfdu;
   Matrix<double, 16, 17> dfdx_global;
-  Matrix<double, 16, 6> dfdu_global;
+  Matrix<double, 16, 6> dfdu;
 
-  dynamics.Evaluate(xdot, x, u, dfdx_global, dfdu_global);
+  dynamics.Evaluate(xdot, x, u, dfdx_global, dfdu);
 
+  // Compute the jacobian for the local parameterization which is the jacobian
+  // of the box plus operation evaluated at delta = 0
+  // http://ceres-solver.org/nnls_modeling.html#localparameterization
   CostFunctorAutoDiff<double, BoxPlusFunctor, 17, 17, 16> box_plus;
   Matrix<double, 17, 1> y;
   Matrix<double, 16, 1> delta;
@@ -243,33 +193,17 @@ TEST(Autodiff, UAVLocalParameterization)
   Matrix<double, 17, 17> bp_dfdx;
   Matrix<double, 17, 16> bp_dfdd;
   box_plus.Evaluate(y, x, delta, bp_dfdx, bp_dfdd);
-  std::cout << "bp_dfdx: " << std::endl << bp_dfdx << std::endl;
-  std::cout << "bp_dfdd: " << std::endl << bp_dfdd << std::endl;
 
-  // http://ceres-solver.org/nnls_modeling.html#localparameterization
   // To use a local parameterization, or error state parameterization
   // local_matrix = global_matrix * jacobian
-  Matrix<double, 17, 16> jacobian;
-  ErrorStateParameterization parameterization;
-  parameterization.ComputeJacobian(x, jacobian);
-  std::cout << "local param jacobian: " << std::endl << jacobian << std::endl;
-
+  // http://ceres-solver.org/nnls_modeling.html#localparameterization
   Matrix<double, 16, 16> dfdx_local;
-  //dfdx_local = dfdx_global * jacobian;
   dfdx_local = dfdx_global * bp_dfdd;
 
-  //Matrix<double, 16, 6> dfdu_local;
-  //dfdu_local = dfdu_global * bp_dfdd;
-
   Matrix<double, 16, 16> true_dfdx_local = UAVAnalyticalJacobianDfDx(x, u);
-  Matrix<double, 16, 6> true_dfdu_local = UAVAnalyticalJacobianDfDu(x, u);
+  Matrix<double, 16, 6> true_dfdu = UAVAnalyticalJacobianDfDu(x, u);
 
-  std::cout << "dfdx: " << std::endl << dfdx_local << std::endl;
-  std::cout << "true dfdx: " << std::endl << true_dfdx_local << std::endl;
-
-  std::cout << "dfdu: " << std::endl << dfdu_global << std::endl;
-  std::cout << "true dfdu: " << std::endl << true_dfdu_local << std::endl;
   ASSERT_MAT_NEAR(dfdx_local, true_dfdx_local, 1e-14);
-  ASSERT_MAT_NEAR(dfdu_global, true_dfdu_local, 1e-14);
+  ASSERT_MAT_NEAR(dfdu, true_dfdu, 1e-14);
 }
 
