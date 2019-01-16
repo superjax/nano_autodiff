@@ -7,7 +7,8 @@
 #include "nano_ad/nano_ad.h"
 #include "nano_ad/test_common.h"
 
-TEST(CostFunctorAutoDiff, CompileNormalVecs) {
+TEST(CostFunctorAutoDiff, CompileNormalVecs)
+{
   typedef Matrix<double, 2, 1> OT;
   typedef Matrix<double, 3, 1> IT1;
   typedef Matrix<double, 4, 1> IT2;
@@ -24,7 +25,8 @@ TEST(CostFunctorAutoDiff, CompileNormalVecs) {
   f.Evaluate(res, x, x2, j, j2);
 }
 
-TEST(CostFunctorAutoDiff, CompileMaps) {
+TEST(CostFunctorAutoDiff, CompileMaps)
+{
   typedef Matrix<double, 2, 1> OT;
   typedef Matrix<double, 3, 1> IT1;
   typedef Matrix<double, 4, 1> IT2;
@@ -45,7 +47,8 @@ TEST(CostFunctorAutoDiff, CompileMaps) {
   f.Evaluate(_res, _x, _x2, _j, _j2);
 }
 
-TEST(Autodiff, SimpleTest) {
+TEST(Autodiff, SimpleTest)
+{
   Eigen::AutoDiffScalar<Eigen::Vector2d> x, y, z;
   x = 8.0;
   x.derivatives() << 1, 0;
@@ -55,12 +58,17 @@ TEST(Autodiff, SimpleTest) {
   y = x * x + z;
 
   ASSERT_FLOAT_EQ(y.value(), 66.0);
-  ASSERT_FLOAT_EQ(y.derivatives()(0), 2 * 8.0); // dydx = 2x
-  ASSERT_FLOAT_EQ(y.derivatives()(1), 1.0);     // dydz = 1
+  ASSERT_FLOAT_EQ(y.derivatives()(0), 2 * 8.0);  // dydx = 2x
+  ASSERT_FLOAT_EQ(y.derivatives()(1), 1.0);      // dydz = 1
 }
 
-TEST(Autodiff, VectorTest) {
-  enum { NI = 2, NO = 2 };
+TEST(Autodiff, VectorTest)
+{
+  enum
+  {
+    NI = 2,
+    NO = 2
+  };
   typedef Eigen::Matrix<double, NI, 1> xVec;
   typedef Eigen::Matrix<double, NO, 1> yVec;
   typedef Eigen::AutoDiffScalar<xVec> ADScalar;
@@ -87,8 +95,15 @@ TEST(Autodiff, VectorTest) {
   ASSERT_MAT_EQ(y(1).derivatives().transpose(), dydx_desired.row(1));
 }
 
-TEST(Autodiff, MultiParameterVectorTest) {
-  enum { NI = 4, NO = 2, NX1 = 2, NX2 = 2 };
+TEST(Autodiff, MultiParameterVectorTest)
+{
+  enum
+  {
+    NI = 4,
+    NO = 2,
+    NX1 = 2,
+    NX2 = 2
+  };
   typedef Eigen::Matrix<double, NI, 1> inputVec;
   typedef Eigen::Matrix<double, NO, 1> yVec;
   typedef Eigen::AutoDiffScalar<inputVec> ADScalar;
@@ -121,19 +136,22 @@ TEST(Autodiff, MultiParameterVectorTest) {
   ASSERT_MAT_EQ(y(1).derivatives().bottomRows<2>().transpose(), dydx2.row(1));
 }
 
-struct SimpleFunctor {
+struct SimpleFunctor
+{
   template <typename Derived1, typename Derived2, typename Derived3>
-  bool f(Derived1 &y, const Derived2 &x1, const Derived3 &x2) const {
+  bool f(Derived1 &y, const Derived2 &x1, const Derived3 &x2) const
+  {
     y = x1.cwiseProduct(x2);
     return true;
   }
 };
 
-TEST(Autodiff, EvaluateFunctor) {
+TEST(Autodiff, EvaluateFunctor)
+{
   CostFunctorAutoDiff<double, SimpleFunctor, 2, 2, 2> f;
 
-  Vector2d x1{8, 2};
-  Vector2d x2{3, 4};
+  Vector2d x1{ 8, 2 };
+  Vector2d x2{ 3, 4 };
   Vector2d y;
 
   f.Evaluate(y, x1, x2);
@@ -143,11 +161,12 @@ TEST(Autodiff, EvaluateFunctor) {
   ASSERT_MAT_EQ(y_des, y);
 }
 
-TEST(Autodiff, AutoDiffFunctor) {
+TEST(Autodiff, AutoDiffFunctor)
+{
   CostFunctorAutoDiff<double, SimpleFunctor, 2, 2, 2> f;
 
-  Vector2d x1{8, 2};
-  Vector2d x2{3, 4};
+  Vector2d x1{ 8, 2 };
+  Vector2d x2{ 3, 4 };
   Matrix2d dfdx1, dfdx2;
   Vector2d y;
 
@@ -165,9 +184,11 @@ TEST(Autodiff, AutoDiffFunctor) {
   ASSERT_MAT_EQ(dfdx2, dydx2_des);
 }
 
-struct QuatPlus {
+struct QuatPlus
+{
   template <typename Derived1, typename Derived2, typename Derived3>
-  bool f(Derived1 &_qp, const Derived2 _q, const Derived3 delta) const {
+  bool f(Derived1 &_qp, const Derived2 _q, const Derived3 delta) const
+  {
     typedef typename Derived1::Scalar T;
     typedef Matrix<T, 4, 1> Vec4;
     typedef Matrix<T, 3, 1> Vec3;
@@ -183,7 +204,8 @@ struct QuatPlus {
 };
 typedef CostFunctorAutoDiff<double, QuatPlus, 4, 4, 3> QuatParam;
 
-TEST(Autodiff, Quaternion) {
+TEST(Autodiff, Quaternion)
+{
   quat::Quatd q1 = quat::Quatd::from_euler(
       10.0 * M_PI / 180.0, -45.0 * M_PI / 180.0, 20.0 * M_PI / 180.0);
   Vector3d delta = (Vector3d() << 0.01, 0.02, -0.01).finished();
