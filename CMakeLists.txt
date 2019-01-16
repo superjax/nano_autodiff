@@ -16,7 +16,8 @@ include_directories(include
     ${GTEST_INCLUDE_DIRS})
 
 add_executable(nano_ad_test
-    src/test_autodiff.cpp)
+    src/test_autodiff.cpp
+    src/test_autodiff_dynamics.cpp)
 target_link_libraries(nano_ad_test
     gtest
     gtest_main
