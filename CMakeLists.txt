@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.8)
 project(nano_mhe)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -16,7 +16,9 @@ include_directories(include
     ${GTEST_INCLUDE_DIRS})
 
 add_executable(nano_ad_test
-    src/test_autodiff.cpp)
+    src/test_autodiff.cpp
+    src/test_autodiff_dynamics.cpp
+    src/test_autodiff_local_parameterization.cpp)
 target_link_libraries(nano_ad_test
     gtest
     gtest_main
