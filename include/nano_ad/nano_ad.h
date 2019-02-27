@@ -132,7 +132,7 @@ private:
     {
       j.row(i) = r(i).derivatives().block(counter, 0, Cols, 1).transpose();
     }
-    counter += *(cols);
+    counter += Cols;
     cols++;
     return 0;
   }
