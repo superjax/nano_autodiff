@@ -27,6 +27,9 @@
   } while (false)
 #endif
 
+namespace nano_ad
+{
+
 using namespace Eigen;
 
 constexpr int accumulator(const int *arr, int size, int current_length = 0)
@@ -148,3 +151,4 @@ public:
   }
 };
 typedef CostFunctorAutoDiff<double, EmptyCostFunctor, 2, 2> EmptyCostFunctorAD;
+}

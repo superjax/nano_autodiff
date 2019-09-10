@@ -5,8 +5,10 @@
 
 #include "geometry/quat.h"
 
-#include "nano_ad/nano_ad.h"
+#include "nano_ad/forward.h"
 #include "nano_ad/test_common.h"
+
+using namespace nano_ad;
 
 template <typename T>
 Matrix<T, 3, 3> skew(const Matrix<T, 3, 1>& v)

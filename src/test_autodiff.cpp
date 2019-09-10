@@ -4,8 +4,10 @@
 
 #include "geometry/quat.h"
 
-#include "nano_ad/nano_ad.h"
+#include "nano_ad/forward.h"
 #include "nano_ad/test_common.h"
+
+using namespace nano_ad;
 
 TEST(CostFunctorAutoDiff, CompileNormalVecs)
 {
