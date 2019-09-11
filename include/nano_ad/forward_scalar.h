@@ -7,6 +7,15 @@ namespace nano_ad {
 
 using namespace Eigen;
 
+template<typename T>
+class ForwardAD;
+
+template <typename FigureOut>
+ForwardAD<FigureOut> autoForwardAD(const typename FigureOut::Scalar &x, const FigureOut& dx)
+{
+    return ForwardAD<FigureOut>(x,dx);
+}
+
 template<typename _Type>
 class ForwardAD
 {
@@ -19,10 +28,7 @@ public:
 
     ForwardAD(const Scalar& x, const int dx_idx)
         : x_(x), dx_(Vec::Unit(dx_idx))
-    {
-        eigen_assert(dx_idx >=0);
-        eigen_assert(dx_idx < Vec::RowsAtCompileTime);
-    }
+    {}
 
     ForwardAD(const ForwardAD& other) :
         x_(other.x()), dx_(other.dx())
@@ -142,9 +148,6 @@ public:
         return *this;
     }
 
-
-
-
     friend std::ostream& operator << (std::ostream &s, const ForwardAD&a)
     {
         return s << a.x();
@@ -156,10 +159,63 @@ public:
     Vec& dx() { return dx_; }
     const Vec& dx() const { return dx_; }
 
+    /// Vector Ops
+    template <typename Vec2>
+    using sumResult = CwiseBinaryOp<internal::scalar_sum_op<Scalar>,
+                           const Vec,
+                           const typename internal::remove_all<Vec2>::type>;
+    template<typename Vec2>
+    const ForwardAD<sumResult<Vec2>>
+    operator+(const ForwardAD<Vec2>& other) const
+    {
+        return ForwardAD<sumResult<Vec2>>(x_ + other.x(), dx_ + other.dx());
+    }
+
+
+    template<typename Vec2>
+    ForwardAD& operator+=(const ForwardAD<Vec2>& other)
+    {
+      (*this) = (*this) + other;
+      return *this;
+    }
+
+    template <typename Vec2>
+    using diffResult = CwiseBinaryOp<internal::scalar_difference_op<Scalar>,
+                          const Vec,
+                          const typename internal::remove_all<Vec2>::type>;
+
+    template<typename Vec2>
+    const ForwardAD<diffResult<Vec2>>
+    operator-(const ForwardAD<Vec2>& other) const
+    {
+        return ForwardAD<diffResult<Vec2>>(x_ - other.x(), dx_ - other.dx());
+    }
+
+    template<typename Vec2>
+    ForwardAD&  operator-=(const ForwardAD<Vec2>& other) const
+    {
+        (*this) = (*this) - other;
+        return *this;
+    }
+
+    template<typename Vec2>
+    auto operator*(const ForwardAD<Vec2>& other) const
+    {
+        return autoForwardAD(x_ * other.x(),
+                             dx_ * other.x() + other.dx() * x_);
+    }
+
+
+
+
+
+
+
 protected:
     Scalar x_;
     Vec dx_;
 
 };
+
 
 }
