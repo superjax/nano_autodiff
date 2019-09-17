@@ -132,7 +132,7 @@ TEST(ForwardScalar, ScalarDivide)
     EXPECT_FLOAT_EQ(x.dx()(2), 1.0);
 }
 
-TEST(ForwardScalar, VectorAdd)
+TEST(ForwardScalar, Add)
 {
     ForwardAD<Vector3d> x1(3.0, 1);
     ForwardAD<Vector3d> x2(8.0, 1);
@@ -145,7 +145,7 @@ TEST(ForwardScalar, VectorAdd)
     EXPECT_FLOAT_EQ(y.dx()(2), 0);
 }
 
-TEST(ForwardScalar, VectorSubtract)
+TEST(ForwardScalar, Subtract)
 {
     ForwardAD<Vector3d> x1(3.0, 1);
     ForwardAD<Vector3d> x2(8.0, 1);
@@ -158,18 +158,23 @@ TEST(ForwardScalar, VectorSubtract)
     EXPECT_FLOAT_EQ(y.dx()(2), 0);
 }
 
-TEST (ForwardScalar, VectorTimes)
+TEST (ForwardScalar, Times)
 {
     ForwardAD<Vector3d> x1(3.0, 1);
     ForwardAD<Vector3d> x2(8.0, 2);
     ForwardAD<Vector3d> x3(8.0, 2);
 
     ForwardAD<Vector3d> y = x1*x2;
-
-
-
 }
 
+TEST (ForwardScalar, Divide)
+{
+    ForwardAD<Vector3d> x1(3.0, 1);
+    ForwardAD<Vector3d> x2(8.0, 2);
+    ForwardAD<Vector3d> x3(8.0, 2);
+
+    ForwardAD<Vector3d> y = x1/x2;
+}
 
 
 
